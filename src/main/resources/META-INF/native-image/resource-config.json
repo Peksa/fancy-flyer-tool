@@ -1,0 +1,15 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\Qcom/sun/jna/win32-x86-64/jnidispatch.dll\\E"
+    }, 
+    {
+      "pattern":"\\Qicon.png\\E"
+    }
+  ]},
+  "bundles":[{
+      "name":"com.sun.javafx.tk.quantum.QuantumMessagesBundle",
+      "locales":[""]
+    }]
+}
