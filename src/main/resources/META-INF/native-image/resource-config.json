@@ -10,6 +10,9 @@
   ]},
   "bundles":[{
       "name":"com.sun.javafx.tk.quantum.QuantumMessagesBundle",
-      "locales":[""]
+      "locales":[
+        "", 
+        "und"
+      ]
     }]
 }

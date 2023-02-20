@@ -11,6 +11,7 @@ public class LevelHook {
     private final PointerPathResolver resolver;
     private final HookedProcess process;
 
+
     private MemoryPoller levelPoller = null;
 
     public LevelHook(HookedProcess process) {

@@ -1,6 +1,7 @@
 package dev.peksa.speedrun.journey.app;
 
 import dev.peksa.speedrun.journey.memory.BoostHook;
+import dev.peksa.speedrun.logging.Logger;
 
 public class BoostCalculator {
 
@@ -11,8 +12,18 @@ public class BoostCalculator {
         double cameraAngleRad = Math.asin(data.cameraAngle());
         double theoreticalMaxBoost = getTheoreticalMaxBoost(cameraAngleRad, level == 7);
         double penalty = 21.5d-(Math.cos(data.movementSide()) * 21.5d);
-        double currentMaxBoost = Math.signum(data.cameraAngle()) * theoreticalMaxBoost * data.movementForward() - penalty/18.3d;
-        return new MaxBoostData(Math.toDegrees(cameraAngleRad), data.boost(), theoreticalMaxBoost, currentMaxBoost);
+
+        double cameraDegrees = Math.toDegrees(cameraAngleRad);
+        double currentMaxBoost = Math.signum(data.cameraAngle()) * theoreticalMaxBoost
+                * getSlowBoostCompensatedForwardStick(cameraDegrees, data.movementForward(), data.boost())
+                - penalty/18.3d;
+        return new MaxBoostData(cameraDegrees, data.boost(), theoreticalMaxBoost, currentMaxBoost);
+    }
+
+    private static double getSlowBoostCompensatedForwardStick(double cameraDegrees, float movementForward, float boost) {
+        // TODO: this depends on camera or fov or speed or something....
+        // Ruled out: a simple threshold in movementForward
+        return movementForward;
     }
 
     private static double getTheoreticalMaxBoost(double angle, boolean paradiseMode) {

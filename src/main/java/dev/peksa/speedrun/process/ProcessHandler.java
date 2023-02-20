@@ -43,7 +43,7 @@ public class ProcessHandler {
             if (hMods[i] != null) {
                 String fileName = extractFileNameFromPath(path);
                 var module = new Module(hMods[i].getPointer(), path, fileName);
-                Logger.info("Found: " + module);
+                Logger.debug("Found: " + module);
                 ret.put(fileName, module);
             }
         }
