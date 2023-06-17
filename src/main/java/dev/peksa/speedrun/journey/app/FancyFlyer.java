@@ -18,7 +18,6 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
@@ -27,8 +26,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class FancyFlyer extends Application {
@@ -89,7 +86,7 @@ public class FancyFlyer extends Application {
 
         currentBoostText.setText("" + (Math.round(maxBoostData.currentBoost() * 100d) / 100d));
         maxBoostText.setText("" + Math.max(0, Math.round(maxBoostData.theoreticalMaxBoost() * 100d) / 100d));
-        cameraAngleText.setText(Math.round(maxBoostData.cameraAngleDegrees() * 100d) / 100d + "°");
+        cameraAngleText.setText(Math.round(maxBoostData.cameraAngleDegrees() * 100d) / 100d + "\u00b0");
         maxBoostRect.setWidth((maxBoostData.theoreticalMaxBoost() / 18.3f) * 500d);
         currentBoostRect.setWidth(((maxBoostData.currentBoost() / 18.3f) * 500d) - 8);
         if (displayCappedMaxBoost) {
