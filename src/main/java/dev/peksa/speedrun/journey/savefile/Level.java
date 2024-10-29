@@ -15,10 +15,6 @@ public enum Level {
         this.val = val;
     }
 
-    public int val() {
-        return val;
-    }
-    
     public static Level fromInt(int val) {
         return switch (val) {
             case 0 -> CS;
@@ -29,7 +25,7 @@ public enum Level {
             case 5 -> TW;
             case 6 -> SN;
             case 7 -> PR;
-            default -> throw new IllegalStateException("Unexpected value: " + val);
+            default -> throw new IllegalStateException("Unexpected level value: " + val);
         };
     }
 }

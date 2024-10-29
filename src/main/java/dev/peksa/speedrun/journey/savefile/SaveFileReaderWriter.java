@@ -1,7 +1,6 @@
 package dev.peksa.speedrun.journey.savefile;
 
 import dev.peksa.speedrun.journey.memory.PositionHook;
-import dev.peksa.speedrun.logging.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,15 +10,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SaveFileReaderWriter {
 
+
+public class SaveFileReaderWriter {
+    private static final System.Logger LOGGER = System.getLogger(SaveFileReaderWriter.class.getSimpleName());
     private static final Path SAVE_FILE_PATH = Paths.get(System.getenv("LOCALAPPDATA") + "/PeksasFancyFlyerTool/savestates.txt");
 
     public void createEmptyFileIfNotExists() throws IOException {
         if (Files.exists(SAVE_FILE_PATH)) {
             return;
         }
-        Logger.info("Save state file did not exist, creating: " + SAVE_FILE_PATH);
+        LOGGER.log(System.Logger.Level.INFO, "Save state file did not exist, creating: " + SAVE_FILE_PATH);
         Files.createDirectories(SAVE_FILE_PATH.getParent());
         saveSaveStatesToFile(createEmptySaveStateMap());
     }
@@ -48,7 +49,7 @@ public class SaveFileReaderWriter {
                     StandardOpenOption.CREATE
             );
         } catch (IOException e) {
-            Logger.error("Error when saving save states to file, ignoring!!", e);
+            LOGGER.log(System.Logger.Level.ERROR, "Error when saving save states to file, ignoring!!", e);
         }
     }
 
@@ -60,7 +61,7 @@ public class SaveFileReaderWriter {
         try {
             lines = Files.readAllLines(SAVE_FILE_PATH);
         } catch (IOException e) {
-            Logger.error("Error when loading save states from file, ignoring!!", e);
+            LOGGER.log(System.Logger.Level.ERROR,"Error when loading save states from file, ignoring!!", e);
         }
         Level currentLevel;
         PositionHook.SaveState[] states = null;

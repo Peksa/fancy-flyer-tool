@@ -34,9 +34,9 @@ public class HookedProcess {
         if (!success) {
             int error = kernel32.GetLastError();
             if (error == 0x12b) {
-                throw new RuntimeException(executableName + " (" + pid + "): Unable to read specified address");
+                throw new RuntimeException(executableName + " (pid " + pid + "): Unable to read specified address");
             }
-            throw new RuntimeException(executableName + " (" + pid + "): Failed to read the process, error code: " + error);
+            throw new RuntimeException(executableName + " (pid " + pid + "): Error while attempting to read memory from process, error code: " + error);
         }
         return output;
     }

@@ -4,13 +4,13 @@ import dev.peksa.speedrun.journey.memory.BoostHook;
 
 public class BoostCalculator {
 
-    private static final double BOOST_OFFSET = 25d*Math.PI / 6d;
-    private static final double BOOST_PARADISE_OFFSET = 15d*Math.PI / 6d;
+    private static final double BOOST_OFFSET = 25d * Math.PI / 6d;
+    private static final double BOOST_PARADISE_OFFSET = 15d * Math.PI / 6d;
 
     public static MaxBoostData calculateMaxBoost(BoostHook.BoostData data, int level) {
         double cameraAngleRad = Math.asin(data.cameraAngle());
         double theoreticalMaxBoost = getTheoreticalMaxBoost(cameraAngleRad, level == 7);
-        double penalty = 21.5d-(Math.cos(data.movementSide()) * 21.5d);
+        double penalty = 21.5d - Math.cos(data.movementSide() * 21.5d);
 
         double cameraDegrees = Math.toDegrees(cameraAngleRad);
         double currentMaxBoost = Math.signum(data.cameraAngle()) * theoreticalMaxBoost

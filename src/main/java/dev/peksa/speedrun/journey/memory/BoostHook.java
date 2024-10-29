@@ -1,13 +1,15 @@
 package dev.peksa.speedrun.journey.memory;
 
 import com.sun.jna.Pointer;
-import dev.peksa.speedrun.logging.Logger;
 import dev.peksa.speedrun.process.*;
 
 import java.time.Duration;
 import java.util.Map;
+import java.lang.System.Logger.Level;
 
 public class BoostHook {
+
+    private static final System.Logger LOGGER = System.getLogger(BoostHook.class.getSimpleName());
 
     private final HookedProcess process;
     private MemoryPoller boostPoller;
@@ -19,7 +21,7 @@ public class BoostHook {
     }
 
     public void startPolling() {
-        Logger.info("Starting boost poller...");
+        LOGGER.log(Level.INFO, "Starting boost poller...");
 
         Pointer boostPointer = this.resolver.resolvePointerPath(new PointerPath(
                 "Journey.exe", 0x3CFCA88, 0x40, 0x98, 0x20, 0x30, 0x5d0, 0xddc));
@@ -35,12 +37,12 @@ public class BoostHook {
                 "camera-angle", cameraAnglePointer
         ));
         this.boostPoller.startPolling();
-        Logger.info("Boost polling started!");
+        LOGGER.log(Level.INFO,"Boost polling started!");
     }
 
     public BoostData getBoost() {
         Map<String, Measurement> m = boostPoller.getLatestMeasurements();
-        if (m == null || m.size() == 0) {
+        if (m == null || m.isEmpty()) {
             return null;
         }
 

@@ -17,7 +17,7 @@ dependencies {
 
 javafx {
     version = '23.0.1'
-    modules = ['javafx.graphics']
+    modules = ['javafx.graphics', 'javafx.controls']
     platform = 'win'
 }
 
@@ -42,7 +42,7 @@ jlink  {
         name = 'peksa-fancy-flyer-tool'
     }
     jpackage {
-        imageOptions = ['--win-console', '--description', "Peksa's fancy flyer tool", '--copyright', 'Copyright (c) 2024 Peksa']
+        imageOptions = ['--description', "Peksa's fancy flyer tool", '--copyright', 'Copyright (c) 2024 Peksa']
         vendor = 'Peksa'
         description = 'Asd'
         icon = 'icon.ico'

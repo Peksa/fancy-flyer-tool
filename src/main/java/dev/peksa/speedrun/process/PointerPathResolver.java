@@ -2,9 +2,12 @@ package dev.peksa.speedrun.process;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import dev.peksa.speedrun.logging.Logger;
+import java.lang.System.Logger.Level;
+
 
 public class PointerPathResolver {
+
+    private static final System.Logger LOGGER = System.getLogger(PointerPathResolver.class.getSimpleName());
 
     private final HookedProcess process;
 
@@ -14,14 +17,14 @@ public class PointerPathResolver {
 
     public Pointer resolvePointerPath(PointerPath path) {
         Pointer currentAddress = process.getModule(path.moduleName());
-        Logger.debug("Base address: " + currentAddress);
+        LOGGER.log(Level.DEBUG,"Base address: " + currentAddress);
         int[] offsets = path.offsets();
         for (int i = 0; i < offsets.length-1; i++) {
-            Logger.debug("Attempting to read: " + currentAddress + " + 0x" + Integer.toHexString(offsets[i]));
+            LOGGER.log(Level.DEBUG,"Attempting to read: " + currentAddress + " + 0x" + Integer.toHexString(offsets[i]));
             Pointer next = currentAddress.share(offsets[i]);
-            Logger.debug(" = " + next);
+            LOGGER.log(Level.DEBUG," = " + next);
             currentAddress = process.readMemory(next, Native.POINTER_SIZE).getPointer(0);
-            Logger.debug("Got result:       = " + currentAddress);
+            LOGGER.log(Level.DEBUG,"Got result:       = " + currentAddress);
         }
         return currentAddress.share(offsets[offsets.length-1]);
     }

@@ -3,14 +3,19 @@ package dev.peksa.speedrun.process;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.IntByReference;
-import dev.peksa.speedrun.logging.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.lang.System.Logger.Level;
+
+
 public class ProcessHandler {
+
+    private static final System.Logger LOGGER = System.getLogger(ProcessHandler.class.getSimpleName());
+
     private final Kernel32 kernel32;
     private final Psapi psapi;
 
@@ -43,7 +48,7 @@ public class ProcessHandler {
             if (hMods[i] != null) {
                 String fileName = extractFileNameFromPath(path);
                 var module = new Module(hMods[i].getPointer(), path, fileName);
-                Logger.debug("Found: " + module);
+                LOGGER.log(Level.DEBUG,"Found: " + module);
                 ret.put(fileName, module);
             }
         }
@@ -56,7 +61,7 @@ public class ProcessHandler {
             var processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();
 
             snapshot = kernel32.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0L));
-            if (snapshot == kernel32.INVALID_HANDLE_VALUE) {
+            if (snapshot == WinBase.INVALID_HANDLE_VALUE) {
                 throw new RuntimeException("Unable to parse the process map: INVALID_HANDLE_VALUE");
             }
             kernel32.Process32First(snapshot, processEntry);

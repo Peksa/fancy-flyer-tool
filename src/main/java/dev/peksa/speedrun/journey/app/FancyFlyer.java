@@ -10,7 +10,7 @@ import dev.peksa.speedrun.journey.memory.LevelHook;
 import dev.peksa.speedrun.journey.memory.PositionHook;
 import dev.peksa.speedrun.journey.savefile.Level;
 import dev.peksa.speedrun.journey.savefile.SaveFileReaderWriter;
-import dev.peksa.speedrun.logging.Logger;
+import dev.peksa.speedrun.logging.ConsoleLogger;
 import dev.peksa.speedrun.process.HookedProcess;
 import dev.peksa.speedrun.process.ProcessHandler;
 import javafx.animation.AnimationTimer;
@@ -22,21 +22,29 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
 import javafx.scene.text.*;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.Map;
 
+import java.lang.System.Logger;
+
 public class FancyFlyer extends Application {
+
+    private static final System.Logger LOGGER = System.getLogger(FancyFlyer.class.getSimpleName());
+
     private LevelHook levelHook;
     private BoostHook boostHook;
     private PositionHook positionHook;
     private double dragOffsetX = 0;
     private double dragOffsetY = 0;
+    private boolean holdingMove;
 
     // UI elements
-    private Scene scene;
+    private Stage stage;
     private Rectangle maxBoostRect, capBoostRect, currentBoostRect;
     private Text currentBoostText, maxBoostText, cameraAngleText, paradiseText;
     private boolean displayCappedMaxBoost = true;
@@ -47,21 +55,27 @@ public class FancyFlyer extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         try {
-            initMemoryPolling();
-            loadOrCreateSaveStatesFromFile();
+            this.stage = stage;
             createRectangles();
             createTexts();
             createScene(stage);
+
+            GuiAlert.setStage(stage);
+            GuiAlert.displayStartupMessage();
+
+            initMemoryPolling();
+            loadOrCreateSaveStatesFromFile();
+
             stage.show();
             stage.setAlwaysOnTop(true);
 
             startRenderLoop();
         } catch (Exception e) {
-            Logger.error("Error while starting application", e);
+            LOGGER.log(Logger.Level.ERROR,"Error while starting application", e);
+            GuiAlert.displayError("Error while starting application", e);
             throw e;
         }
     }
-
 
 
     private void startRenderLoop() {
@@ -74,6 +88,12 @@ public class FancyFlyer extends Application {
             public void handle(long nowNanos) {
                 if (frameIntervalNanos <= (nowNanos - lastFrameRenderedAt)) {
                     renderFrame();
+                    if (holdingMove) {
+                        Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+                        stage.setX(mouseLocation.getX() + dragOffsetX);
+                        stage.setY(mouseLocation.getY() + dragOffsetY);
+                    }
+
                     lastFrameRenderedAt = nowNanos;
                 }
             }
@@ -109,9 +129,13 @@ public class FancyFlyer extends Application {
         HookedProcess process = processHandler.openProcess("Journey.exe", WinNT.PROCESS_VM_READ | WinNT.PROCESS_VM_WRITE | WinNT.PROCESS_VM_OPERATION);
 
         levelHook = new LevelHook(process);
+        int level = levelHook.getLevelSync();
+        if (level != 0) {
+            GuiAlert.displayWarning("Unsupported level during startup",
+                    "It seems like you're not in Chapter Select, if this doesn't work, try starting this tool while in Chapter Select. Detected level: " + level);
+        }
         boostHook = new BoostHook(process);
         positionHook = new PositionHook(process);
-
         levelHook.startPolling();
         boostHook.startPolling();
     }
@@ -142,6 +166,23 @@ public class FancyFlyer extends Application {
                 }
             } else if ("B".equals(event.getCode().getChar())) {
                 displayCappedMaxBoost = !displayCappedMaxBoost;
+                capBoostRect.setWidth(0);
+            } else if ("M".equals(event.getCode().getChar())) {
+                if (holdingMove) {
+                    return;
+                }
+                LOGGER.log(Logger.Level.INFO, "Pressed M");
+                Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+                dragOffsetX = stage.getX() - mouseLocation.getX();
+                dragOffsetY = stage.getY() - mouseLocation.getY();
+                holdingMove = true;
+            }
+        });
+
+        scene.setOnKeyReleased(event -> {
+            if ("M".equals(event.getCode().getChar())) {
+                holdingMove = false;
+                LOGGER.log(Logger.Level.INFO, "Released M");
             }
         });
 
@@ -154,15 +195,15 @@ public class FancyFlyer extends Application {
     private void restoreState(int digit, Level level) {
         PositionHook.SaveState[] arr = saveStates.get(level);
         if (arr == null || arr[digit] == null) {
-            Logger.info("Cannot load from slot " + digit + ", in level: " + level + ". No such save exists!");
+            LOGGER.log(Logger.Level.INFO,"Cannot load from slot " + digit + ", in level: " + level + ". No such save exists!");
             return;
         }
-        Logger.info("Restoring from slot " + digit + ", in level: " + level);
+        LOGGER.log(Logger.Level.INFO,"Restoring from slot " + digit + ", in level: " + level);
         positionHook.restoreSaveState(arr[digit]);
     }
 
     private void saveState(int digit, Level level) {
-        Logger.info("Saving slot " + digit + ", in level: " + level);
+        LOGGER.log(Logger.Level.INFO,"Saving slot " + digit + ", in level: " + level);
         PositionHook.SaveState saveState = positionHook.getCurrentSaveState();
         PositionHook.SaveState[] arr = saveStates.get(level);
         arr[digit] = saveState;
@@ -213,11 +254,10 @@ public class FancyFlyer extends Application {
     }
 
     private void loadOrCreateSaveStatesFromFile() {
-
         try {
             fileReaderWriter.createEmptyFileIfNotExists();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Logger.Level.WARNING, "Error while creating empty save state file", e);
         }
 
         this.saveStates = fileReaderWriter.readSaveStatesFromFile();
@@ -230,6 +270,7 @@ public class FancyFlyer extends Application {
     }
 
     public static void main(String args[]) {
+        ConsoleLogger.enableDebug();
         launch(args);
     }
 }
