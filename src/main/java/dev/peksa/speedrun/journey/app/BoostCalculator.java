@@ -1,7 +1,6 @@
 package dev.peksa.speedrun.journey.app;
 
 import dev.peksa.speedrun.journey.memory.BoostHook;
-import dev.peksa.speedrun.logging.Logger;
 
 public class BoostCalculator {
 

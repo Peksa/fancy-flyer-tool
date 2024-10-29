@@ -53,6 +53,7 @@ public class FancyFlyer extends Application {
             createTexts();
             createScene(stage);
             stage.show();
+            stage.setAlwaysOnTop(true);
 
             startRenderLoop();
         } catch (Exception e) {

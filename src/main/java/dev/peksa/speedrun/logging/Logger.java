@@ -3,6 +3,7 @@ package dev.peksa.speedrun.logging;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+// TODO: replace with built-in logging
 public class Logger {
     private static boolean debug = true;
 
