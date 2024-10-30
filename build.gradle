@@ -5,7 +5,6 @@ plugins {
     // Fork with patches for newer JDKS:
     // https://www.reddit.com/r/java/comments/1g8o17x/patched_versions_of_badassjlink_and_badassruntime/
     id 'com.dua3.gradle.jlink' version '3.0.1-patch-1'
-
     id 'idea'
 }
 
@@ -21,38 +20,36 @@ javafx {
     platform = 'win'
 }
 
-var addJvmArgs = ['--enable-preview']
+var compileJvmArgs = ['--enable-preview']
+var runJvmArgs = compileJvmArgs + ['-XX:+UseZGC', '-Xlog:gc=debug::time']
 
 tasks.withType(JavaCompile).forEach {
-    it.options.compilerArgs.addAll addJvmArgs
+    it.options.compilerArgs.addAll compileJvmArgs
 }
 
 application {
     mainModule = 'dev.peksa.speedrun'
     mainClass = 'dev.peksa.speedrun.journey.app.Launcher'
-    applicationDefaultJvmArgs.addAll addJvmArgs
+    applicationDefaultJvmArgs.addAll runJvmArgs
 }
 
 jlink  {
     options = ['--strip-debug', '--compress', 'zip-9', '--no-header-files', '--no-man-pages', '--strip-native-commands',
                '--strip-java-debug-attributes', '--dedup-legal-notices=error-if-not-same-content']
     launcher {
-        jvmArgs = addJvmArgs
+        jvmArgs = runJvmArgs
         noConsole = false
         name = 'peksa-fancy-flyer-tool'
     }
     jpackage {
-        imageOptions = ['--description', "Peksa's fancy flyer tool", '--copyright', 'Copyright (c) 2024 Peksa']
+        imageOptions = ['--win-console', '--description', "Peksa's fancy flyer tool", '--copyright', 'Copyright (c) 2024 Peksa']
         vendor = 'Peksa'
-        description = 'Asd'
         icon = 'icon.ico'
         version = '5.0.0'
         skipInstaller = true
         targetPlatformName = 'win'
     }
 }
-
-assemble.dependsOn jpackage
 
 repositories {
     mavenCentral()

@@ -14,8 +14,7 @@ public class BoostCalculator {
 
         double cameraDegrees = Math.toDegrees(cameraAngleRad);
         double currentMaxBoost = Math.signum(data.cameraAngle()) * theoreticalMaxBoost
-                * getSlowBoostCompensatedForwardStick(cameraDegrees, data.movementForward(), data.boost())
-                - penalty/18.3d;
+                * getSlowBoostCompensatedForwardStick(cameraDegrees, data.movementForward(), data.boost());
         return new MaxBoostData(cameraDegrees, data.boost(), theoreticalMaxBoost, currentMaxBoost);
     }
 

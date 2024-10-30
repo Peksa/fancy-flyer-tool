@@ -43,6 +43,9 @@ public class ConsoleLogger implements System.Logger {
 
     @Override
     public void log(Level level, ResourceBundle bundle, String msg, Throwable thrown) {
+        if (!isLoggable(level)) {
+            return;
+        }
         if (level == Level.ERROR) {
             System.err.printf("%s %s %s: %s - %s%n", getTimestamp(), level, name, msg, thrown);
         } else {
@@ -52,6 +55,9 @@ public class ConsoleLogger implements System.Logger {
 
     @Override
     public void log(Level level, ResourceBundle bundle, String format, Object... params) {
+        if (!isLoggable(level)) {
+            return;
+        }
         if (level == Level.ERROR) {
             System.err.printf("%s %s %s: %s%n", getTimestamp(), level, name, String.format(format, params));
         } else {
