@@ -1,6 +1,6 @@
 package dev.peksa.speedrun.journey.savefile;
 
-import dev.peksa.speedrun.journey.memory.PositionHook;
+import dev.peksa.speedrun.journey.memory.PositionEditor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,14 +25,14 @@ public class SaveFileReaderWriter {
         saveSaveStatesToFile(createEmptySaveStateMap());
     }
 
-    public void saveSaveStatesToFile(Map<Level, PositionHook.SaveState[]> saveStates) {
+    public void saveSaveStatesToFile(Map<Level, PositionEditor.SaveState[]> saveStates) {
         List<String> lines = new ArrayList<>();
         for (var entry : saveStates.entrySet()) {
             Level level = entry.getKey();
             lines.add(level.name());
             lines.add("--");
             for (int i = 0; i < entry.getValue().length; i++) {
-                PositionHook.SaveState s = entry.getValue()[i];
+                PositionEditor.SaveState s = entry.getValue()[i];
                 if (s == null) {
                     continue;
                 }
@@ -53,7 +53,7 @@ public class SaveFileReaderWriter {
         }
     }
 
-    public Map<Level, PositionHook.SaveState[]> readSaveStatesFromFile() {
+    public Map<Level, PositionEditor.SaveState[]> readSaveStatesFromFile() {
 
         var ret = createEmptySaveStateMap();
 
@@ -64,7 +64,7 @@ public class SaveFileReaderWriter {
             LOGGER.log(System.Logger.Level.ERROR,"Error when loading save states from file, ignoring!!", e);
         }
         Level currentLevel;
-        PositionHook.SaveState[] states = null;
+        PositionEditor.SaveState[] states = null;
         for (String line : lines) {
             if (line.isEmpty() || line.isBlank() || line.startsWith("-")) {
                 continue;
@@ -81,7 +81,7 @@ public class SaveFileReaderWriter {
 
             tokens = line.split(" ");
 
-            var state = new PositionHook.SaveState(
+            var state = new PositionEditor.SaveState(
                     Float.parseFloat(tokens[1]),
                     Float.parseFloat(tokens[2]),
                     Float.parseFloat(tokens[3]),
@@ -95,16 +95,16 @@ public class SaveFileReaderWriter {
         return ret;
     }
 
-    private static TreeMap<Level, PositionHook.SaveState[]> createEmptySaveStateMap() {
+    private static TreeMap<Level, PositionEditor.SaveState[]> createEmptySaveStateMap() {
         return new TreeMap<>(Map.of(
-            Level.CS, new PositionHook.SaveState[10],
-            Level.BB, new PositionHook.SaveState[10],
-            Level.PD, new PositionHook.SaveState[10],
-            Level.SC, new PositionHook.SaveState[10],
-            Level.UG, new PositionHook.SaveState[10],
-            Level.TW, new PositionHook.SaveState[10],
-            Level.SN, new PositionHook.SaveState[10],
-            Level.PR, new PositionHook.SaveState[10]
+            Level.CS, new PositionEditor.SaveState[10],
+            Level.BB, new PositionEditor.SaveState[10],
+            Level.PD, new PositionEditor.SaveState[10],
+            Level.SC, new PositionEditor.SaveState[10],
+            Level.UG, new PositionEditor.SaveState[10],
+            Level.TW, new PositionEditor.SaveState[10],
+            Level.SN, new PositionEditor.SaveState[10],
+            Level.PR, new PositionEditor.SaveState[10]
         ));
     }
 }

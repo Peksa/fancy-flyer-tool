@@ -33,9 +33,8 @@ public class ConsoleLogger implements System.Logger {
 
     @Override
     public boolean isLoggable(Level level) {
-        boolean debugEnabled = debug && !name.startsWith("javafx");
         return switch (level) {
-            case ALL, TRACE, DEBUG -> debugEnabled;
+            case ALL, TRACE, DEBUG -> debug && !name.startsWith("javafx");
             case INFO, WARNING, ERROR -> true;
             case OFF -> false;
         };
@@ -47,9 +46,9 @@ public class ConsoleLogger implements System.Logger {
             return;
         }
         if (level == Level.ERROR) {
-            System.err.printf("%s %s %s: %s - %s%n", getTimestamp(), level, name, msg, thrown);
+            System.err.printf("%s %s %s [%s]: %s - %s%n", getTimestamp(), level, name, currentThreadName(), msg, thrown);
         } else {
-            System.out.printf("%s %s %s: %s - %s%n", getTimestamp(), level, name, msg, thrown);
+            System.out.printf("%s %s %s [%s]: %s - %s%n", getTimestamp(), level, name, currentThreadName(), msg, thrown);
         }
     }
 
@@ -59,9 +58,12 @@ public class ConsoleLogger implements System.Logger {
             return;
         }
         if (level == Level.ERROR) {
-            System.err.printf("%s %s %s: %s%n", getTimestamp(), level, name, String.format(format, params));
+            System.err.printf("%s %s %s [%s]: %s%n", getTimestamp(), level, name, currentThreadName(), String.format(format, params));
         } else {
-            System.out.printf("%s %s %s: %s%n", getTimestamp(), level, name, String.format(format, params));
+            System.out.printf("%s %s %s [%s]: %s%n", getTimestamp(), level, name, currentThreadName(), String.format(format, params));
         }
+    }
+    private String currentThreadName() {
+        return Thread.currentThread().getName();
     }
 }

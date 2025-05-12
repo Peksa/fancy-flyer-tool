@@ -1,16 +1,13 @@
 package dev.peksa.speedrun.journey.app;
 
-import com.sun.jna.Native;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.Psapi;
-import com.sun.jna.platform.win32.WinNT;
-import com.sun.jna.win32.W32APIOptions;
-import dev.peksa.speedrun.journey.memory.BoostHook;
-import dev.peksa.speedrun.journey.memory.LevelHook;
-import dev.peksa.speedrun.journey.memory.PositionHook;
+import com.sun.jna.Pointer;
+import dev.peksa.speedrun.journey.memory.BoostPoller;
+import dev.peksa.speedrun.journey.memory.InjectMaxBoostHook;
+import dev.peksa.speedrun.journey.memory.LevelPoller;
+import dev.peksa.speedrun.journey.memory.PositionEditor;
 import dev.peksa.speedrun.journey.savefile.Level;
 import dev.peksa.speedrun.journey.savefile.SaveFileReaderWriter;
-import dev.peksa.speedrun.process.HookedProcess;
+import dev.peksa.speedrun.process.OpenedProcess;
 import dev.peksa.speedrun.process.ProcessHandler;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -35,6 +32,7 @@ import java.text.DecimalFormat;
 import java.util.Map;
 
 import java.lang.System.Logger;
+import java.util.Set;
 
 public class FancyFlyer extends Application {
 
@@ -52,9 +50,11 @@ public class FancyFlyer extends Application {
 
     private static final DropShadow DROP_SHADOW = new DropShadow(15, DARKSLATEGREY);
 
-    private LevelHook levelHook;
-    private BoostHook boostHook;
-    private PositionHook positionHook;
+    private LevelPoller levelPoller;
+    private BoostPoller boostPoller;
+    private PositionEditor positionEditor;
+    private InjectMaxBoostHook maxBoostHook;
+
     private double dragOffsetX = 0;
     private double dragOffsetY = 0;
     private boolean holdingMove;
@@ -73,7 +73,7 @@ public class FancyFlyer extends Application {
     private boolean displayCappedMaxBoost = true;
     private boolean displayFlickEvaluation = false;
 
-    private Map<Level, PositionHook.SaveState[]> saveStates;
+    private Map<Level, PositionEditor.SaveState[]> saveStates;
     private final SaveFileReaderWriter fileReaderWriter = new SaveFileReaderWriter();
 
     @Override
@@ -120,14 +120,14 @@ public class FancyFlyer extends Application {
     }
 
     private void renderFrame(long now) {
-        int level = levelHook.getLevel();
-        BoostHook.BoostData boost = boostHook.getBoost();
+        int level = levelPoller.getLevel();
+        BoostPoller.BoostData boost = boostPoller.getBoost();
+
         BoostCalculator.MaxBoostData maxBoostData = BoostCalculator.calculateMaxBoost(boost, level);
         currentBoostText.setText(
                 getWithTwoDecimals(maxBoostData.currentBoost()) + " / " +
-                getWithTwoDecimals(maxBoostData.theoreticalMaxBoost())
+                        getWithTwoDecimals(maxBoostData.theoreticalMaxBoost())
         );
-
 
         double flickTimeout = boost.cameraVerticalTimeout();
 
@@ -153,6 +153,7 @@ public class FancyFlyer extends Application {
         if (displayCappedMaxBoost) {
             capBoostRect.setWidth(((maxBoostData.currentMaxBoost() / 18.3f) * 500d) - 8);
         }
+
 
         if (level == 7) {
             paradiseText.setOpacity(1);
@@ -209,22 +210,27 @@ public class FancyFlyer extends Application {
     }
 
     private void initMemoryPolling() {
-        Kernel32 kernel32 = Native.load(Kernel32.class, W32APIOptions.UNICODE_OPTIONS);
-        Psapi psapi = Native.load(Psapi.class, W32APIOptions.UNICODE_OPTIONS);
+        var processHandler = new ProcessHandler();
+        OpenedProcess process = processHandler.openProcess("Journey.exe", Set.of("Journey.exe"), 1);
+        maxBoostHook = new InjectMaxBoostHook(process);
+        Pointer maxBoostPointer = maxBoostHook.injectMaxBoostCode();
 
-        var processHandler = new ProcessHandler(kernel32, psapi);
-        HookedProcess process = processHandler.openProcess("Journey.exe", WinNT.PROCESS_VM_READ | WinNT.PROCESS_VM_WRITE | WinNT.PROCESS_VM_OPERATION);
+        levelPoller = new LevelPoller(process);
 
-        levelHook = new LevelHook(process);
-        int level = levelHook.getLevelSync();
-        if (level != 0) {
+        int level = levelPoller.getLevelSync();
+        String levelName = switch (level) {
+            case 6 -> "Snow";
+            case 7 -> "Paradise";
+            default -> "level-" + level;
+        };
+        if (level == 6 || level == 7) {
             GuiAlert.displayWarning("Unsupported level during startup",
-                    "It seems like you're not in Chapter Select, if this doesn't work, try starting this tool while in Chapter Select. Detected level: " + level);
+                    "It seems like you've started this tool while in " + levelName + ", which normally doesn't work - try starting this tool while in Chapter Select.");
         }
-        boostHook = new BoostHook(process);
-        positionHook = new PositionHook(process);
-        levelHook.startPolling();
-        boostHook.startPolling();
+        boostPoller = new BoostPoller(process, maxBoostPointer);
+        positionEditor = new PositionEditor(process);
+        levelPoller.startPolling();
+        boostPoller.startPolling();
     }
 
 
@@ -249,7 +255,7 @@ public class FancyFlyer extends Application {
         scene.setOnKeyPressed(event -> {
             if (event.getCode().isDigitKey()) {
                 int digit = Integer.parseInt(event.getCode().getChar());
-                Level level = Level.fromInt(levelHook.getLevel());
+                Level level = Level.fromInt(levelPoller.getLevel());
                 if (event.isControlDown()) {
                     saveState(digit, level);
                 } else {
@@ -293,19 +299,19 @@ public class FancyFlyer extends Application {
     }
 
     private void restoreState(int digit, Level level) {
-        PositionHook.SaveState[] arr = saveStates.get(level);
+        PositionEditor.SaveState[] arr = saveStates.get(level);
         if (arr == null || arr[digit] == null) {
             LOGGER.log(Logger.Level.INFO,"Cannot load from slot " + digit + ", in level: " + level + ". No such save exists!");
             return;
         }
         LOGGER.log(Logger.Level.INFO,"Restoring from slot " + digit + ", in level: " + level);
-        positionHook.restoreSaveState(arr[digit]);
+        positionEditor.restoreSaveState(arr[digit]);
     }
 
     private void saveState(int digit, Level level) {
         LOGGER.log(Logger.Level.INFO,"Saving slot " + digit + ", in level: " + level);
-        PositionHook.SaveState saveState = positionHook.getCurrentSaveState();
-        PositionHook.SaveState[] arr = saveStates.get(level);
+        PositionEditor.SaveState saveState = positionEditor.getCurrentSaveState();
+        PositionEditor.SaveState[] arr = saveStates.get(level);
         arr[digit] = saveState;
         fileReaderWriter.saveSaveStatesToFile(saveStates);
     }
@@ -386,11 +392,12 @@ public class FancyFlyer extends Application {
 
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
+        maxBoostHook.restoreOriginalCode();
         System.exit(0);
     }
 
-    public static void main(String args[]) {
+    public static void main(String... args) {
         launch(args);
     }
 }

@@ -1,27 +1,28 @@
 plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
-    // org.beryx.jlink is currently unmaintained, see: https://github.com/beryx/badass-jlink-plugin/issues/223
-    // Fork with patches for newer JDKS:
-    // https://www.reddit.com/r/java/comments/1g8o17x/patched_versions_of_badassjlink_and_badassruntime/
-    id 'com.dua3.gradle.jlink' version '3.0.1-patch-1'
+    id 'org.beryx.jlink' version '3.1.1'
     id 'idea'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(23)
+java.toolchain.languageVersion = JavaLanguageVersion.of(24)
 
 dependencies {
-    implementation 'net.java.dev.jna:jna-platform-jpms:5.15.0'
+    implementation 'net.java.dev.jna:jna-platform-jpms:5.17.0'
 }
 
 javafx {
-    version = '23.0.1'
+    version = '24.0.1'
     modules = ['javafx.graphics', 'javafx.controls']
     platform = 'win'
 }
 
 var compileJvmArgs = ['--enable-preview']
-var runJvmArgs = compileJvmArgs + ['-XX:+UseZGC', '-Xlog:gc=debug::time']
+// JavaFX 25 will likely stop using sun.misc.Unsafe, when upgrading to JavaFx, this flag can be removed:
+// --sun-misc-unsafe-memory-access=allow
+// Without it, this warning is logged:
+// WARNING: sun.misc.Unsafe::allocateMemory has been called by com.sun.marlin.OffHeapArray
+var runJvmArgs = compileJvmArgs + ['-XX:+UseZGC', '-Xlog:gc=debug::time', '--enable-native-access=com.sun.jna,javafx.graphics', '--sun-misc-unsafe-memory-access=allow']
 
 tasks.withType(JavaCompile).forEach {
     it.options.compilerArgs.addAll compileJvmArgs
@@ -42,10 +43,11 @@ jlink  {
         name = 'peksa-fancy-flyer-tool'
     }
     jpackage {
-        imageOptions = ['--win-console', '--description', "Peksa's fancy flyer tool", '--copyright', 'Copyright (c) 2024 Peksa']
+        // Add '--win-console' to imageOptions below to enable the console window with logs
+        imageOptions = ['--description', "Peksa's fancy flyer tool", '--copyright', 'Copyright (c) 2025 Peksa']
         vendor = 'Peksa'
         icon = 'icon.ico'
-        version = '5.0.0'
+        version = '6.0.0'
         skipInstaller = true
         targetPlatformName = 'win'
     }

@@ -35,15 +35,7 @@ public class GuiAlert {
     }
 
     public static void displayStartupMessage() {
-        var alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Terms of Use");
-        alert.setHeaderText("Peksa's Fancy Flyer Tool: Only for use during speedrun PRACTICE!");
-        alert.setContentText("""
-                This tool is intended for PRACTICING Journey speedruns!
-                It is against the Journey speedrun.com rules to have this tool running during a run, regardless if it's running in the background or not.
-                
-                Please confirm that you will not submit any Journey speedruns where you have had this tool running.
-                """);
+        var alert = createConfirmationAlert();
 
         if (stage != null && stage.getScene() != null) {
             alert.initOwner(stage.getScene().getWindow());
@@ -56,7 +48,21 @@ public class GuiAlert {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isEmpty() || result.get() == cancel) {
             Platform.exit();
+            System.exit(0);
         }
+    }
+
+    private static Alert createConfirmationAlert() {
+        var alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Terms of Use");
+        alert.setHeaderText("Peksa's Fancy Flyer Tool: Only for use during speedrun PRACTICE!");
+        alert.setContentText("""
+                This tool is intended for PRACTICING Journey speedruns!
+                It is against the Journey speedrun.com rules to have this tool running during a run, regardless if it's running in the background or not.
+                
+                Please confirm that you will not submit any Journey speedruns where you have had this tool running.
+                """);
+        return alert;
     }
 
     private static void displayAlert(Type type, String title, String message, Exception exception) {
